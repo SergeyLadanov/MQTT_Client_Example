@@ -13,22 +13,24 @@ enable_language(CXX C)
 add_executable(
     ${EXECUTABLE} 
     Core/Src/main.cpp
-    MQTT_Packet/MQTTConnectClient.c
-    MQTT_Packet/MQTTConnectServer.c
-    MQTT_Packet/MQTTDeserializePublish.c
-    MQTT_Packet/MQTTFormat.c
-    MQTT_Packet/MQTTPacket.c
-    MQTT_Packet/MQTTSerializePublish.c
-    MQTT_Packet/MQTTSubscribeClient.c
-    MQTT_Packet/MQTTSubscribeServer.c
-    MQTT_Packet/MQTTUnsubscribeClient.c
-    MQTT_Packet/MQTTUnsubscribeServer.c
+    Middlewares/MQTT_Packet/MQTTConnectClient.c
+    Middlewares/MQTT_Packet/MQTTConnectServer.c
+    Middlewares/MQTT_Packet/MQTTDeserializePublish.c
+    Middlewares/MQTT_Packet/MQTTFormat.c
+    Middlewares/MQTT_Packet/MQTTPacket.c
+    Middlewares/MQTT_Packet/MQTTSerializePublish.c
+    Middlewares/MQTT_Packet/MQTTSubscribeClient.c
+    Middlewares/MQTT_Packet/MQTTSubscribeServer.c
+    Middlewares/MQTT_Packet/MQTTUnsubscribeClient.c
+    Middlewares/MQTT_Packet/MQTTUnsubscribeServer.c
+    Middlewares/TCP_Client/Src/TCP_Client.cpp
 )
 
 # Директории с *.h файлами
 include_directories(
     Core/Inc
-    MQTT_Packet
+    Middlewares/MQTT_Packet
+    Middlewares/TCP_Client/Inc
 )
 
 # Флаги компиляции
