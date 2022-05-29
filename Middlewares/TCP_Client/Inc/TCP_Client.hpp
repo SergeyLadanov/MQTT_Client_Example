@@ -77,11 +77,15 @@ public:
         Hclient.Self = this;
     }
     int Connect(const char *host, uint16_t port);
-    bool IsConnected();
+    bool IsConnected(void);
     int Send(uint8_t *data, uint32_t len);
     void BindObserver(IObserver *obj)
     {
         Hclient.Observer = obj;
+    }
+    void Disconnect(void)
+    {
+        Hclient.KeepLooping = false;
     }
 private:
     static char* DomainIP(const char *domain);

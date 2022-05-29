@@ -31,6 +31,7 @@ private:
 
 TCP_Client ClTest;
 TCP_Observer Observer;
+static int counter = 10;
 
 // Основная программа
 int main(void)
@@ -53,6 +54,11 @@ int main(void)
     while (ClTest.IsConnected())
     {
         sleep(1);
+        counter--;
+        if (!counter)
+        {
+            ClTest.Disconnect();
+        }
     }
 
     sleep(2);

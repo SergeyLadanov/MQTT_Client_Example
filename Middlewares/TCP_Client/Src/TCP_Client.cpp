@@ -58,7 +58,6 @@ int TCP_Client::Connect(const char *host, uint16_t port)
         int err;
         #endif
         hcl->KeepLooping = true;
-
         printf("Receive thread was started\r\n");
 
         do
@@ -67,10 +66,8 @@ int TCP_Client::Connect(const char *host, uint16_t port)
 
             pthread_mutex_lock(&hcl->Mutex);
 
-
             if (read == 0)
             {
-                hcl->KeepLooping = false;
                 pthread_mutex_unlock(&hcl->Mutex);
                 break;
             }
@@ -82,9 +79,6 @@ int TCP_Client::Connect(const char *host, uint16_t port)
                 if ((err != WSAENOTCONN) && (err != WSAECONNABORTED) && (err == WSAECONNRESET))
                     printf("Errore nella lettura dal client\n");
                 #endif
-
-                hcl->KeepLooping = false;
-                hcl->Fd = INVALID_SOCKET;
                 pthread_mutex_unlock(&hcl->Mutex);
                 break;
             }
@@ -181,7 +175,6 @@ int TCP_Client::Send(uint8_t *data, uint32_t len)
                 printf("Errore nella scrittura verso il client");
             #endif
             Hclient.KeepLooping = false;
-            Hclient.Fd = INVALID_SOCKET;
             break;
         }
 
