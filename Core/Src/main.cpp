@@ -95,6 +95,7 @@ private:
         STATE_CONN_SUBACK
     }ConnStates;
 
+    TCP_Client *htcp = nullptr;
     ConnStates State = STATE_NO_CON;
     char Username[64];
     char Password[64];
@@ -112,6 +113,18 @@ public:
         }
 
     }
+
+    void Disconnect(void)
+    {
+        unsigned char local_buf[200];
+        int buflen = sizeof(local_buf);
+        int len = 0;
+        len = MQTTSerialize_disconnect(local_buf, buflen);
+        printf("disconnecting\n");
+        htcp->Send((uint8_t *) local_buf, len);
+        htcp->Disconnect();
+    }
+
 private:
     void OnTcpReceived(TCP_Client *obj, uint8_t *buf, uint32_t len) override
     {
@@ -232,15 +245,14 @@ private:
                     &payload_in, &payloadlen_in, local_buf, buflen);
                     printf("message arrived %.*s\n", payloadlen_in, payload_in);
 
-                    if (strcmp((const char *) payload_in, "1"))
+                    if (*payload_in == '1')
                     {
-                        globalState = 1;
+                         globalState = 1;
                     }
 
-                    
-                    if (strcmp((const char *) payload_in, "0"))
+                    if (*payload_in == '0')
                     {
-                        globalState = 0;
+                         globalState = 0;
                     }
 
 
@@ -263,7 +275,7 @@ private:
     void OnTcpConnected(TCP_Client *obj) override
     {
         printf("Connected!\r\n");
-
+        htcp = obj;
 
         MQTTPacket_connectData data = MQTTPacket_connectData_initializer;
         int rc = 0;
@@ -285,14 +297,6 @@ private:
         len = MQTTSerialize_connect(buf, buflen, &data);
 
         obj->Send((uint8_t *) buf, len);
-
-        // printf("disconnecting\n");
-        // len = MQTTSerialize_disconnect(buf, buflen);
-        // rc = transport_sendPacketBuffer(mysock, buf, len);
-
-    // exit:
-    //     transport_close(mysock);
-
     }
 
     void OnTcpDisconnected(TCP_Client *obj) override
@@ -365,7 +369,7 @@ int main(int argc, char *argv[])
     while (counter)
     {
         sleep(1);
-        //tcp_cl1.Connect((const char*) host, port);
+        tcp_cl1.Connect((const char*) host, port);
         counter--;
     }
 
