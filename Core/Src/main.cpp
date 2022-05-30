@@ -146,6 +146,7 @@ private:
         int buflen = sizeof(local_buf);
         int req_qos = 0;
         int msgid = 1;
+        int repply_len = 0;
         MQTTString topicString = MQTTString_initializer;
 
 
@@ -191,9 +192,12 @@ private:
 
                 /* subscribe */
                 topicString.cstring = (char *) "rgb_switch";
-                len = MQTTSerialize_subscribe(local_buf, buflen, 0, msgid, 1, &topicString, &req_qos);
-
-                obj->Send((uint8_t *) local_buf, len);
+                repply_len += MQTTSerialize_subscribe(&local_buf[repply_len], buflen-repply_len, 0, msgid, 1, &topicString, &req_qos);
+                topicString.cstring = (char *) "rgb_brightness";
+                repply_len += MQTTSerialize_subscribe(&local_buf[repply_len], buflen-repply_len, 0, msgid, 1, &topicString, &req_qos);
+                topicString.cstring = (char *) "rgb_color";
+                repply_len += MQTTSerialize_subscribe(&local_buf[repply_len], buflen-repply_len, 0, msgid, 1, &topicString, &req_qos);
+                obj->Send((uint8_t *) local_buf, repply_len);
 
 
             break;
@@ -208,6 +212,9 @@ private:
                     int rc = 0;
 
                     rc = MQTTDeserialize_suback(&submsgid, 1, &subcount, &granted_qos, local_buf, buflen);
+
+                    printf("Subcount: %d\n", subcount);
+
                     if (granted_qos != 0)
                     {
                         printf("granted qos != 0, %d\n", granted_qos);
@@ -243,6 +250,9 @@ private:
 
                     rc = MQTTDeserialize_publish(&dup, &qos, &retained, &msgid, &receivedTopic,
                     &payload_in, &payloadlen_in, local_buf, buflen);
+                    
+                    printf("Msg id: %d\n", msgid);
+                    printf("Received topic: %s\n", receivedTopic.cstring);
                     printf("message arrived %.*s\n", payloadlen_in, payload_in);
 
                     if (*payload_in == '1')
@@ -369,7 +379,7 @@ int main(int argc, char *argv[])
     while (counter)
     {
         sleep(1);
-        tcp_cl1.Connect((const char*) host, port);
+        //tcp_cl1.Connect((const char*) host, port);
         counter--;
     }
 
