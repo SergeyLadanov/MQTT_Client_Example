@@ -78,7 +78,7 @@ private:
 
     void TcpPollConnectionl(TCP_Client *obj) override
     {
-        printf("Poll connection!\r\n");
+
     }
 };
 
@@ -91,8 +91,7 @@ private:
     typedef enum
     {
         STATE_NO_CON = 0,
-        STATE_CONN_ACK,
-        STATE_CONN_SUBACK
+        STATE_CONN_ACK
     }ConnStates;
 
     TCP_Client *htcp = nullptr;
@@ -125,6 +124,24 @@ public:
         htcp->Disconnect();
     }
 
+    int Subscribe(char *topic_name, int msgid)
+    {
+        if (State != STATE_CONN_ACK)
+        {
+            return -1;
+        }
+        unsigned char local_buf[200];
+        int buflen = sizeof(local_buf);
+        int repply_len = 0;
+        int req_qos = 0;
+         
+        MQTTString topicString = MQTTString_initializer;
+        topicString.cstring = topic_name;
+        repply_len = MQTTSerialize_subscribe(local_buf, buflen, 0, msgid, 1, &topicString, &req_qos);
+        htcp->Send((uint8_t *) local_buf, repply_len);
+        return 0;
+    }
+
 private:
     void OnTcpReceived(TCP_Client *obj, uint8_t *buf, uint32_t len) override
     {
@@ -148,6 +165,7 @@ private:
         int msgid = 1;
         int repply_len = 0;
         MQTTString topicString = MQTTString_initializer;
+        int rc = 0;
 
 
 
@@ -170,115 +188,98 @@ private:
         };
 
 
-        switch (State)
-        {
-            case STATE_NO_CON :
-                /* wait for connack */
-                if (MQTTPacket_read(local_buf, buflen, transport_getdata) == CONNACK)
-                {
-                    unsigned char sessionPresent, connack_rc;
+        int parse_result = MQTTPacket_read(local_buf, buflen, transport_getdata);
+        
 
-                    if (MQTTDeserialize_connack(&sessionPresent, &connack_rc, local_buf, len) != 1 || connack_rc != 0)
-                    {
-                        printf("Unable to connect, return code %d\n", connack_rc);
-                        State = STATE_NO_CON;
-                    }
-                    else
-                    {
-                        printf("Success connack\n");
-                        State = STATE_CONN_ACK;
-                    }
+        switch(parse_result)
+        {
+            case CONNACK :
+                unsigned char sessionPresent, connack_rc;
+
+                if (MQTTDeserialize_connack(&sessionPresent, &connack_rc, local_buf, len) != 1 || connack_rc != 0)
+                {
+                    printf("Unable to connect, return code %d\n", connack_rc);
+                    State = STATE_NO_CON;
+                }
+                else
+                {
+                    printf("Success connack\n");
+                    State = STATE_CONN_ACK;
                 }
 
                 /* subscribe */
-                topicString.cstring = (char *) "rgb_switch";
-                repply_len += MQTTSerialize_subscribe(&local_buf[repply_len], buflen-repply_len, 0, msgid, 1, &topicString, &req_qos);
-                topicString.cstring = (char *) "rgb_brightness";
-                repply_len += MQTTSerialize_subscribe(&local_buf[repply_len], buflen-repply_len, 0, msgid, 1, &topicString, &req_qos);
-                topicString.cstring = (char *) "rgb_color";
-                repply_len += MQTTSerialize_subscribe(&local_buf[repply_len], buflen-repply_len, 0, msgid, 1, &topicString, &req_qos);
-                obj->Send((uint8_t *) local_buf, repply_len);
-
-
+                Subscribe((char *) "rgb_switch", 1);
+                Subscribe((char *) "rgb_brightness", 2);
+                Subscribe((char *) "rgb_color", 3);
             break;
 
-            case STATE_CONN_ACK :
+            case SUBACK :
+                unsigned short submsgid;
+                int subcount;
+                int granted_qos;
 
-                if (MQTTPacket_read(local_buf, buflen, transport_getdata) == SUBACK) 	/* wait for suback */
+                rc = MQTTDeserialize_suback(&submsgid, 1, &subcount, &granted_qos, local_buf, buflen);
+
+                printf("Subcount: %d\n", subcount);
+
+                if (granted_qos != 0)
                 {
-                    unsigned short submsgid;
-                    int subcount;
-                    int granted_qos;
-                    int rc = 0;
-
-                    rc = MQTTDeserialize_suback(&submsgid, 1, &subcount, &granted_qos, local_buf, buflen);
-
-                    printf("Subcount: %d\n", subcount);
-
-                    if (granted_qos != 0)
-                    {
-                        printf("granted qos != 0, %d\n", granted_qos);
-                        State = STATE_NO_CON;
-                    }
-                    else
-                    {
-                        printf("Success SUB ACK\n");
-                        State = STATE_CONN_SUBACK;
-                    }
+                    printf("granted qos != 0, %d\n", granted_qos);
                 }
+                else
+                {
+                    printf("Success SUB ACK\n");
 
-                
-
+                }
             break;
 
-            case STATE_CONN_SUBACK :
-                /* loop getting msgs on subscribed topic */
-                topicString.cstring = (char *) "rgb_state";
+            case PUBLISH :
+                unsigned char dup;
+                int qos;
+                unsigned char retained;
+                unsigned short msgid;
+                int payloadlen_in;
+                unsigned char* payload_in;
+                //int rc;
+                MQTTString receivedTopic;
 
-                /* transport_getdata() has a built-in 1 second timeout,
-                your mileage will vary */
-                if (MQTTPacket_read(local_buf, buflen, transport_getdata) == PUBLISH)
+                rc = MQTTDeserialize_publish(&dup, &qos, &retained, &msgid, &receivedTopic,
+                &payload_in, &payloadlen_in, local_buf, buflen);
+
+
+                printf("Rc: %d\n", rc);
+                printf("Msg id: %d\n", msgid);
+                printf("Qos: %d\n", qos);
+                printf("Dup: %d\n", dup);
+                printf("Payload len: %d\n", payloadlen_in);
+                printf("retained: %d\n", retained);
+                printf("Received topic: %s\n", receivedTopic.cstring);
+                printf("message arrived %.*s\n", payloadlen_in, payload_in);
+
+                if (*payload_in == '1')
                 {
-                    unsigned char dup;
-                    int qos;
-                    unsigned char retained;
-                    unsigned short msgid;
-                    int payloadlen_in;
-                    unsigned char* payload_in;
-                    int rc;
-                    MQTTString receivedTopic;
-
-                    rc = MQTTDeserialize_publish(&dup, &qos, &retained, &msgid, &receivedTopic,
-                    &payload_in, &payloadlen_in, local_buf, buflen);
-                    
-                    printf("Msg id: %d\n", msgid);
-                    printf("Received topic: %s\n", receivedTopic.cstring);
-                    printf("message arrived %.*s\n", payloadlen_in, payload_in);
-
-                    if (*payload_in == '1')
-                    {
-                         globalState = 1;
-                    }
-
-                    if (*payload_in == '0')
-                    {
-                         globalState = 0;
-                    }
-
-
+                    globalState = 1;
                 }
+
+                if (*payload_in == '0')
+                {
+                    globalState = 0;
+                }
+
 
                 char payload[64];
-                int payloadlen = sprintf(payload, "%d", globalState);
+                int payloadlen;
 
+                payloadlen = sprintf(payload, "%d", globalState);
+
+                /* loop getting msgs on subscribed topic */
+                topicString.cstring = (char *) "rgb_state";
                 /* Sending data */
                 printf("publishing reading\n");
-                len = MQTTSerialize_publish(local_buf, buflen, 0, 0, 0, 0, topicString, (unsigned char*)payload, payloadlen);
-                obj->Send((uint8_t *) local_buf, len);
+                repply_len = MQTTSerialize_publish(local_buf, buflen, 0, 0, 0, 0, topicString, (unsigned char*)payload, payloadlen);
+                obj->Send((uint8_t *) local_buf, repply_len);
             break;
-
         }
-
 
     }
 
@@ -288,13 +289,9 @@ private:
         htcp = obj;
 
         MQTTPacket_connectData data = MQTTPacket_connectData_initializer;
-        int rc = 0;
-        int mysock = 0;
+
         unsigned char buf[200];
         int buflen = sizeof(buf);
-        int msgid = 1;
-
-        int req_qos = 0;
 
         int len = 0;
 
@@ -317,7 +314,7 @@ private:
 
     void TcpPollConnectionl(TCP_Client *obj) override
     {
-        printf("Poll connection!\r\n");
+
     }
 };
 
@@ -379,7 +376,7 @@ int main(int argc, char *argv[])
     while (counter)
     {
         sleep(1);
-        //tcp_cl1.Connect((const char*) host, port);
+        tcp_cl1.Connect((const char*) host, port);
         counter--;
     }
 

@@ -18,9 +18,7 @@ void TCP_Client::error(const char *msg)
 char* TCP_Client::DomainIP(const char *domain)
 {
     static char str_result[32] = {0};
-    // WSADATA wdata;
     struct hostent *remoteHost;
-    //int result = WSAStartup(MAKEWORD(2,2), &wdata);
     remoteHost = gethostbyname(domain);
     sprintf(str_result, inet_ntoa(*( struct in_addr*)remoteHost->h_addr_list[0]));
     return str_result;
