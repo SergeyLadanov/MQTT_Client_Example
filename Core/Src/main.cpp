@@ -4,8 +4,18 @@
 #include "MQTTPacket.h"
 
 
-class TCP_Observer : public TCP_Client::IObserver
+class MQTT_Publisher : public TCP_Client::IObserver
 {
+private:
+    char Username[64];
+    char Password[64];
+
+public:
+    MQTT_Publisher(char *username = nullptr, char *password = nullptr)
+    {
+        sprintf(Username, username);
+        sprintf(Password, password);
+    }
 private:
     void OnTcpReceived(TCP_Client *obj, uint8_t *buf, uint32_t len) override
     {
@@ -22,22 +32,22 @@ private:
         int buflen = sizeof(buf);
 
         MQTTString topicString = MQTTString_initializer;
-        char* payload = "20.0";
+        char* payload = (char *) "20.0";
         int payloadlen = strlen(payload);
         int len = 0;
 
         
 
-        data.clientID.cstring = "me";
+        data.clientID.cstring = (char *) "me";
         data.keepAliveInterval = 20;
         data.cleansession = 1;
-        data.username.cstring = "username";
-        data.password.cstring = "password";
+        data.username.cstring = Username;
+        data.password.cstring = Password;
         data.MQTTVersion = 4;
 
         len = MQTTSerialize_connect((unsigned char *)buf, buflen, &data);
 
-        topicString.cstring = "sensor";
+        topicString.cstring = (char *) "sensor";
         len += MQTTSerialize_publish((unsigned char *)(buf + len), buflen - len, 0, 0, 0, 0, topicString, (unsigned char *)payload, payloadlen);
 
         len += MQTTSerialize_disconnect((unsigned char *)(buf + len), buflen - len);
@@ -59,21 +69,59 @@ private:
     void TcpPollConnectionl(TCP_Client *obj) override
     {
         printf("Poll connection!\r\n");
-        //obj->Send((uint8_t *)"Test", 4);
     }
 };
 
 
-TCP_Client ClTest;
-TCP_Observer Observer;
+
+
+class MQTT_Subscriber : public TCP_Client::IObserver
+{
+private:
+    char Username[64];
+    char Password[64];
+public:
+    MQTT_Subscriber(char *username = nullptr, char *password = nullptr)
+    {
+        sprintf(Username, username);
+        sprintf(Password, password);
+    }
+private:
+    void OnTcpReceived(TCP_Client *obj, uint8_t *buf, uint32_t len) override
+    {
+        printf("Received: %s\r\n", (char *) buf);
+    }
+
+    void OnTcpConnected(TCP_Client *obj) override
+    {
+        printf("Connected!\r\n");
+    }
+
+    void OnTcpDisconnected(TCP_Client *obj) override
+    {
+        printf("Disconnected!\r\n");
+    }
+
+    void TcpPollConnectionl(TCP_Client *obj) override
+    {
+        printf("Poll connection!\r\n");
+    }
+};
+
+
+static TCP_Client tcp_cl1, tcp_cl2;
+static MQTT_Publisher mqtt_pub;
+static MQTT_Subscriber mqtt_sub;
 static int counter = 200;
 
 // Основная программа
-int main(void)
+int main(int argc, char *argv[])
 {
 	int err;
-    char *host = "host";
+    char *host = (char *) "host";
     int port = 12608;
+    char *username = (char *) "username";
+    char *password = (char *) "password";
 
     #if defined(_WIN32) || defined(_WIN64)//Windows includes
     WSADATA wsaData;
@@ -85,23 +133,44 @@ int main(void)
 	} 
     #endif
 
+    if (argc > 1)
+    {
+        host = argv[1];
+    }
+        
+    if (argc > 2)
+    {
+        port = atoi(argv[2]);
+    }
+        
+    if (argc > 3)
+    {
+        username = argv[3];
+    }
+        
+    if (argc > 4)
+    {
+        password = argv[4];
+    }
+        
+
     printf("Sending to hostname %s port %d\n", host, port);
 
-    ClTest.BindObserver(&Observer);
-    
+    mqtt_pub = MQTT_Publisher(username, password);
+    mqtt_sub = MQTT_Subscriber(username, password);
+
+    tcp_cl1.BindObserver(&mqtt_pub);
+    tcp_cl2.BindObserver(&mqtt_sub);
+    tcp_cl2.Connect((const char*) host, port);
 
     while (counter)
     {
         sleep(1);
-        ClTest.Connect((const char*) host, port);
+        tcp_cl1.Connect((const char*) host, port);
         counter--;
-        // if (!counter)
-        // {
-        //     ClTest.Disconnect();
-        // }
     }
 
-    sleep(2);
+    sleep(1);
     
     return 0;  
 }
