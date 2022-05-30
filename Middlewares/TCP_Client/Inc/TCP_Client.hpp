@@ -4,7 +4,7 @@
 
 #include <cstdint>
 #include <sys/types.h>
-#include <winsock.h>
+//#include <winsock.h>
 #include <cstdio>
 
 #include <stdlib.h>
@@ -17,6 +17,7 @@
 #include <sys/socket.h> //Add support for sockets
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include <netdb.h>
 #endif
 
 #include <pthread.h>
@@ -50,7 +51,7 @@ private:
         #if defined(_WIN32) || defined(_WIN64)
         SOCKET Fd;
         #else
-        int Client_Fd;
+        int Fd;
         #endif
         IObserver *Observer;
         bool KeepLooping;
@@ -85,6 +86,12 @@ public:
     }
     void Disconnect(void)
     {
+#if defined(_WIN32) || defined(_WIN64)//Windows includes
+        closesocket(Hclient.Fd);
+#else
+        close(Hclient.Fd);
+#endif
+        Hclient.Fd = INVALID_SOCKET;
         Hclient.KeepLooping = false;
     }
 private:
