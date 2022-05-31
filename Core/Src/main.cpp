@@ -245,25 +245,43 @@ private:
                 rc = MQTTDeserialize_publish(&dup, &qos, &retained, &msgid, &receivedTopic,
                 &payload_in, &payloadlen_in, local_buf, buflen);
 
+                snprintf((char *) local_buf, receivedTopic.lenstring.len + 1,  receivedTopic.lenstring.data);
 
+                printf("\r\n\r\n");
                 printf("Rc: %d\n", rc);
                 printf("Msg id: %d\n", msgid);
                 printf("Qos: %d\n", qos);
                 printf("Dup: %d\n", dup);
                 printf("Payload len: %d\n", payloadlen_in);
                 printf("retained: %d\n", retained);
-                printf("Received topic: %s\n", receivedTopic.cstring);
+                printf("Received topic: %s\n", local_buf);
                 printf("message arrived %.*s\n", payloadlen_in, payload_in);
 
-                if (*payload_in == '1')
+                if (!strncmp(receivedTopic.lenstring.data, "rgb_switch", receivedTopic.lenstring.len))
                 {
-                    globalState = 1;
+                    printf("Switch control\r\n");
+                    if (*payload_in == '1')
+                    {
+                        globalState = 1;
+                    }
+
+                    if (*payload_in == '0')
+                    {
+                        globalState = 0;
+                    }
                 }
 
-                if (*payload_in == '0')
+                if (!strncmp(receivedTopic.lenstring.data, "rgb_brightness", receivedTopic.lenstring.len))
                 {
-                    globalState = 0;
+                    printf("Brightness select\r\n");
                 }
+
+                if (!strncmp(receivedTopic.lenstring.data, "rgb_color", receivedTopic.lenstring.len))
+                {
+                    printf("Color select\r\n");
+                }
+
+                printf("\r\n\r\n");
             break;
         }
 
