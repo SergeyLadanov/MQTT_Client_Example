@@ -164,7 +164,6 @@ private:
         int req_qos = 0;
         int msgid = 1;
         int repply_len = 0;
-        MQTTString topicString = MQTTString_initializer;
         int rc = 0;
 
 
@@ -265,19 +264,6 @@ private:
                 {
                     globalState = 0;
                 }
-
-
-                char payload[64];
-                int payloadlen;
-
-                payloadlen = sprintf(payload, "%d", globalState);
-
-                /* loop getting msgs on subscribed topic */
-                topicString.cstring = (char *) "rgb_state";
-                /* Sending data */
-                printf("publishing reading\n");
-                repply_len = MQTTSerialize_publish(local_buf, buflen, 0, 0, 0, 0, topicString, (unsigned char*)payload, payloadlen);
-                obj->Send((uint8_t *) local_buf, repply_len);
             break;
         }
 
@@ -314,7 +300,26 @@ private:
 
     void TcpPollConnectionl(TCP_Client *obj) override
     {
+        if (State == STATE_CONN_ACK)
+        {
+            // Publishing state
+            unsigned char local_buf[200];
+            int buflen = sizeof(local_buf);
+            MQTTString topicString = MQTTString_initializer;
+            int repply_len = 0;
 
+            char payload[64];
+            int payloadlen;
+
+            payloadlen = sprintf(payload, "%d", globalState);
+
+            /* loop getting msgs on subscribed topic */
+            topicString.cstring = (char *) "rgb_state";
+            /* Sending data */
+            printf("publishing reading\n");
+            repply_len = MQTTSerialize_publish(local_buf, buflen, 0, 0, 0, 0, topicString, (unsigned char*)payload, payloadlen);
+            obj->Send((uint8_t *) local_buf, repply_len);
+        }
     }
 };
 
