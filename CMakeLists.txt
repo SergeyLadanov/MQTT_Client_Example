@@ -13,6 +13,7 @@ enable_language(CXX C)
 add_executable(
     ${EXECUTABLE} 
     Core/Src/main.cpp
+    Core/Src/MQTT_Client.cpp
     Middlewares/MQTT_Packet/MQTTConnectClient.c
     Middlewares/MQTT_Packet/MQTTConnectServer.c
     Middlewares/MQTT_Packet/MQTTDeserializePublish.c

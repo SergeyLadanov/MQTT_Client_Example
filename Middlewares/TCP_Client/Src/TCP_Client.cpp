@@ -160,7 +160,7 @@ int TCP_Client::Send(uint8_t *data, uint32_t len)
 {
     char *pbuf = (char *) data;
     #if defined(_WIN32) || defined(_WIN64)
-    int err;
+    int err = 0;;
     #endif
     do
     {
@@ -180,5 +180,5 @@ int TCP_Client::Send(uint8_t *data, uint32_t len)
         len -= sent;
     }
     while (len > 0);
-    return 0;
+    return err;
 }
