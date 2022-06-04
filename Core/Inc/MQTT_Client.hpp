@@ -3,6 +3,7 @@
 
 
 #include "TCP_Client.hpp"
+#include <pthread.h>
 
 class MQTT_Client : public TCP_Client::IObserver
 {
@@ -16,18 +17,29 @@ public:
         virtual void MQTT_PollConnection(MQTT_Client *obj) = 0;
     };
 private:
-    TCP_Client Tcp;
-    pthread_t KeepConnectionTask;
-    bool KeepLooping = false;
+
+    struct DataStruct
+    {
+        TCP_Client Tcp;
+        bool KeepLooping = false;
+        char Host[32];
+        uint16_t Port = 0;
+        pthread_mutex_t Mutex;
+    };
+
     char Username[32];
     char Password[32];
-    char Host[32];
-    uint16_t Port = 0;
+    pthread_t KeepConnectionTask;
+    DataStruct Data;
     IObserver *Observer = nullptr;
 public:
+    MQTT_Client()
+    {
+        Data.Tcp.BindObserver(this);
+    }
     bool Subscribe(char *topic);
     bool Publish(char *topic, char* payload);
-    bool Connect(char *host, uint16_t port, char *username, char *password);
+    bool Begin(char *host, uint16_t port, char *username, char *password);
     void BindObserver(IObserver *obj);
     void Stop(void);
 private:

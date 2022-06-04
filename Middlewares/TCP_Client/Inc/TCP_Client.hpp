@@ -68,13 +68,14 @@ private:
     pthread_t ReceiveTask;
     pthread_t PollTask;
 
-    ClientArg Hclient = {0, nullptr, false};
+    ClientArg Hclient = {INVALID_SOCKET, nullptr, false};
     
 
 public:
     TCP_Client()
     {
         memset(&Hclient, 0, sizeof(ClientArg));
+        Hclient.Fd = INVALID_SOCKET;
         Hclient.Self = this;
     }
     int Connect(const char *host, uint16_t port);

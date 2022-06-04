@@ -2,6 +2,7 @@
 #include "main.hpp"
 #include "TCP_Client.hpp"
 #include "MQTTPacket.h"
+#include "MQTT_Client.hpp"
 
 
 
@@ -347,6 +348,8 @@ static MQTT_Publisher mqtt_pub;
 static MQTT_Subscriber mqtt_sub;
 static int counter = 200;
 
+static MQTT_Client Test;
+
 // Основная программа
 int main(int argc, char *argv[])
 {
@@ -389,17 +392,19 @@ int main(int argc, char *argv[])
 
     printf("Sending to hostname %s port %d\n", host, port);
 
-    mqtt_pub = MQTT_Publisher(username, password);
-    mqtt_sub = MQTT_Subscriber(username, password);
+    // mqtt_pub = MQTT_Publisher(username, password);
+    // mqtt_sub = MQTT_Subscriber(username, password);
 
-    tcp_cl1.BindObserver(&mqtt_pub);
-    tcp_cl2.BindObserver(&mqtt_sub);
-    tcp_cl2.Connect((const char*) host, port);
+    // tcp_cl1.BindObserver(&mqtt_pub);
+    // tcp_cl2.BindObserver(&mqtt_sub);
+    // tcp_cl2.Connect((const char*) host, port);
+
+    Test.Begin("yandex.ru", 80, "sdfsd", "sdfs");
 
     while (counter)
     {
         sleep(1);
-        tcp_cl1.Connect((const char*) host, port);
+        //tcp_cl1.Connect((const char*) host, port);
         counter--;
     }
 
