@@ -18,6 +18,12 @@ public:
     };
 private:
 
+    typedef enum
+    {
+        STATE_NO_CON = 0,
+        STATE_CONN_ACK
+    }ConnStates;
+
     struct DataStruct
     {
         TCP_Client Tcp;
@@ -27,19 +33,23 @@ private:
         pthread_mutex_t Mutex;
     };
 
+    ConnStates State = STATE_NO_CON;
     char Username[32];
     char Password[32];
     pthread_t KeepConnectionTask;
     DataStruct Data;
     IObserver *Observer = nullptr;
+    char Id[32];
 public:
-    MQTT_Client()
+    MQTT_Client(const char *id)
     {
+        snprintf(Id, sizeof(Id), id);
         Data.Tcp.BindObserver(this);
     }
-    bool Subscribe(char *topic);
+    bool Subscribe(char *topic, int msgid = 1);
     bool Publish(char *topic, char* payload);
-    bool Begin(char *host, uint16_t port, char *username, char *password);
+    bool Publish(char *topic, char* payload, int payloadlen);
+    bool Begin(const char *host, uint16_t port, const char *username, const char *password);
     void BindObserver(IObserver *obj);
     void Stop(void);
 private:
