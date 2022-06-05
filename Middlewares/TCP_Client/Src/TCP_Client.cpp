@@ -159,9 +159,8 @@ bool TCP_Client::IsConnected()
 int TCP_Client::Send(uint8_t *data, uint32_t len)
 {
     char *pbuf = (char *) data;
-    #if defined(_WIN32) || defined(_WIN64)
-    int err = 0;;
-    #endif
+    int err = 0;
+
     do
     {
         int sent = send(Hclient.Fd, (char *) data, len, 0);
@@ -170,7 +169,11 @@ int TCP_Client::Send(uint8_t *data, uint32_t len)
             #if defined(_WIN32) || defined(_WIN64)
             err = WSAGetLastError();
             if ((err != WSAENOTCONN) && (err != WSAECONNABORTED) && (err == WSAECONNRESET))
+            {
                 printf("Errore nella scrittura verso il client");
+            }
+            #else
+            err = -1;
             #endif
             Hclient.KeepLooping = false;
             break;
