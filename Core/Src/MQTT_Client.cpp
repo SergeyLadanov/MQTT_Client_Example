@@ -30,14 +30,14 @@ bool MQTT_Client::Subscribe(char *topic, int msgid)
 }
 
 
-bool MQTT_Client::Publish(char *topic, char* payload)
+bool MQTT_Client::Publish(char *topic, unsigned char retained, char* payload)
 {
     int payloadlen = strlen(payload);
-    return Publish(topic, payload, payloadlen);
+    return Publish(topic, retained, payload, payloadlen);
 }
 
 
-bool MQTT_Client::Publish(char *topic, char* payload, int payloadlen)
+bool MQTT_Client::Publish(char *topic, unsigned char retained, char* payload, int payloadlen)
 {
     if (State != STATE_CONN_ACK)
     {
@@ -54,8 +54,8 @@ bool MQTT_Client::Publish(char *topic, char* payload, int payloadlen)
     /* loop getting msgs on subscribed topic */
     topicString.cstring = topic;
     /* Sending data */
-    printf("publishing reading\n");
-    repply_len = MQTTSerialize_publish(local_buf, buflen, 0, 0, 0, 0, topicString, (unsigned char*)payload, payloadlen);
+    // printf("publishing reading\n");
+    repply_len = MQTTSerialize_publish(local_buf, buflen, 0, 0, retained, 0, topicString, (unsigned char*)payload, payloadlen);
     if (!Data.Tcp.Send((uint8_t *) local_buf, repply_len))
     {
         return false;
@@ -91,7 +91,7 @@ bool MQTT_Client::Begin(const char *host, uint16_t port, const char *username, c
             {
                 pthread_mutex_lock(&hdat->Mutex);
 
-                printf("Conn status: %d\r\n", hdat->Tcp.IsConnected());
+                // printf("Conn status: %d\r\n", hdat->Tcp.IsConnected());
                 
                 if (!hdat->Tcp.IsConnected())
                 {
@@ -135,7 +135,7 @@ void MQTT_Client::Stop(void)
 
 void MQTT_Client::OnTcpReceived(TCP_Client *obj, uint8_t *buf, uint32_t len)
 {
-    printf("Received: %s\r\n", (char *) buf);
+    // printf("Received: %s\r\n", (char *) buf);
 
     struct ReceivedData
     {

@@ -77,7 +77,7 @@ private:
             if (strlen(PubSwitcherTopic))
             {
                 snprintf(Repply, sizeof(Repply), "%d", SwitcherState);
-                obj->Publish(PubSwitcherTopic, Repply);
+                obj->Publish(PubSwitcherTopic, 1, Repply);
             }
 
         }
@@ -90,19 +90,19 @@ private:
         if (strlen(TempTopic))
         {
             snprintf(Buf, sizeof(Buf), "%2.3f", Temp);
-            obj->Publish(TempTopic, Buf);
+            obj->Publish(TempTopic, 1, Buf);
         }
 
         if (strlen(HumTopic))
         {
             snprintf(Buf, sizeof(Buf), "%2.3f", Hum);
-            obj->Publish(HumTopic, Buf);
+            obj->Publish(HumTopic, 1, Buf);
         }
         
         if (strlen(PubSwitcherTopic))
         {
             snprintf(Buf, sizeof(Buf), "%d", SwitcherState);
-            obj->Publish(PubSwitcherTopic, Buf);
+            obj->Publish(PubSwitcherTopic, 1, Buf);
         }
     }
 };

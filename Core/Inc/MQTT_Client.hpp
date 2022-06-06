@@ -47,8 +47,8 @@ public:
         Data.Tcp.BindObserver(this);
     }
     bool Subscribe(char *topic, int msgid = 1);
-    bool Publish(char *topic, char* payload);
-    bool Publish(char *topic, char* payload, int payloadlen);
+    bool Publish(char *topic, unsigned char retained, char* payload);
+    bool Publish(char *topic, unsigned char retained, char* payload, int payloadlen);
     bool Begin(const char *host, uint16_t port, const char *username, const char *password);
     void BindObserver(IObserver *obj);
     void Stop(void);
