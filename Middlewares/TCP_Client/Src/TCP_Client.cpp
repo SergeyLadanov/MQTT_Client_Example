@@ -20,14 +20,22 @@ char* TCP_Client::DomainIP(const char *domain)
     static char str_result[32] = {0};
     struct hostent *remoteHost;
     remoteHost = gethostbyname(domain);
-    sprintf(str_result, inet_ntoa(*( struct in_addr*)remoteHost->h_addr_list[0]));
-    return str_result;
+    if (remoteHost)
+    {
+        sprintf(str_result, inet_ntoa(*( struct in_addr*)remoteHost->h_addr_list[0]));
+        return str_result;
+    }
+
+    return nullptr;
 }
 
 int TCP_Client::Connect(const char *host, uint16_t port)
 {
     int status = 0;
     struct sockaddr_in serv_addr;
+    char *IP = nullptr;
+
+    printf("Trying to connect to %s:%d...\r\n", host, port);
 
     Hclient.Fd = socket(AF_INET, SOCK_STREAM, 0);
     if (Hclient.Fd < 0)
@@ -37,12 +45,21 @@ int TCP_Client::Connect(const char *host, uint16_t port)
 
     memset((char *) &serv_addr, 0, sizeof(serv_addr));
     serv_addr.sin_family = AF_INET;
-	serv_addr.sin_addr.s_addr = inet_addr(DomainIP(host));
+    IP = DomainIP(host);
+
+    if (!IP)
+    {
+        Hclient.Fd = INVALID_SOCKET;
+        return -1;
+    }
+
+	serv_addr.sin_addr.s_addr = inet_addr(IP);
     serv_addr.sin_port = htons(port);
 
     if (connect(Hclient.Fd, (struct sockaddr *) &serv_addr, sizeof(serv_addr)) < 0)
 	{
-		error("ERROR connecting");
+        Hclient.Fd = INVALID_SOCKET;
+        printf("ERROR connecting!\r\n");
         return -1;
 	}
     
