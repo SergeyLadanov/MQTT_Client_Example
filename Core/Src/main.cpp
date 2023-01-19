@@ -88,7 +88,7 @@ private:
         char Buf[32];
 
         Hum = Hum + 1;
-
+        printf("Publishing...\r\n");
         if (strlen(TempTopic))
         {
             snprintf(Buf, sizeof(Buf), "%2.3f", Temp);
