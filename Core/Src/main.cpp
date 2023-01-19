@@ -87,6 +87,8 @@ private:
     {
         char Buf[32];
 
+        Hum = Hum + 1;
+
         if (strlen(TempTopic))
         {
             snprintf(Buf, sizeof(Buf), "%2.3f", Temp);
@@ -108,7 +110,7 @@ private:
 };
 
 
-static TCP_Client tcp_cl1;
+static TLS_Client tcp_cl1;
 static MQTT_Publisher mqtt_pub;
 
 

@@ -1,10 +1,10 @@
 #ifndef __MQTT_PUBLISHER_HPP_
 #define __MQTT_PUBLISHER_HPP_
 
-#include "TCP_Client.hpp"
+#include "TLS_Client.hpp"
 #include "MQTTPacket.h"
 
-class MQTT_Publisher : public TCP_Client::IObserver
+class MQTT_Publisher : public TLS_Client::IObserver
 {
 private:
     char Username[64];
@@ -24,12 +24,12 @@ public:
         }
     }
 private:
-    void OnTcpReceived(TCP_Client *obj, uint8_t *buf, uint32_t len) override
+    void OnTcpReceived(TLS_Client *obj, uint8_t *buf, uint32_t len) override
     {
         printf("Received: %s\r\n", (char *) buf);
     }
 
-    void OnTcpConnected(TCP_Client *obj) override
+    void OnTcpConnected(TLS_Client *obj) override
     {
         printf("Connected!\r\n");
 
@@ -68,12 +68,12 @@ private:
         obj->Disconnect();
     }
 
-    void OnTcpDisconnected(TCP_Client *obj) override
+    void OnTcpDisconnected(TLS_Client *obj) override
     {
         printf("Disconnected!\r\n");
     }
 
-    void TcpPollConnectionl(TCP_Client *obj) override
+    void TcpPollConnectionl(TLS_Client *obj) override
     {
 
     }

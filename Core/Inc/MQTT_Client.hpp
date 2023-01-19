@@ -2,10 +2,10 @@
 #define __MQTT_CLIENT_HPP_
 
 
-#include "TCP_Client.hpp"
+#include "TLS_Client.hpp"
 #include <pthread.h>
 
-class MQTT_Client : public TCP_Client::IObserver
+class MQTT_Client : public TLS_Client::IObserver
 {
 public:
     class IObserver
@@ -26,7 +26,7 @@ private:
 
     struct DataStruct
     {
-        TCP_Client Tcp;
+        TLS_Client Tcp;
         bool KeepLooping = false;
         char Host[32];
         uint16_t Port = 0;
@@ -53,10 +53,10 @@ public:
     void BindObserver(IObserver *obj);
     void Stop(void);
 private:
-    void OnTcpReceived(TCP_Client *obj, uint8_t *buf, uint32_t len) override;
-    void OnTcpConnected(TCP_Client *obj) override;
-    void OnTcpDisconnected(TCP_Client *obj) override;
-    void TcpPollConnectionl(TCP_Client *obj) override;
+    void OnTcpReceived(TLS_Client *obj, uint8_t *buf, uint32_t len) override;
+    void OnTcpConnected(TLS_Client *obj) override;
+    void OnTcpDisconnected(TLS_Client *obj) override;
+    void TcpPollConnectionl(TLS_Client *obj) override;
 };
 
 
